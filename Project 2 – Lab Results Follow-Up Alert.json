@@ -1,0 +1,641 @@
+{
+  "name": "Project 2 – Lab Results Follow-Up Alert",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        -80
+      ],
+      "id": "cb579391-a5c4-4f36-88bf-2aa73361ff2d",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1524ae6-743f-4ec4-b78f-2f3a840671e9",
+              "name": "patientId",
+              "value": "P12345",
+              "type": "string"
+            },
+            {
+              "id": "9a1ea723-ad4f-4d52-b185-a424038cec40",
+              "name": "patientName",
+              "value": "Ahmed Hassan",
+              "type": "string"
+            },
+            {
+              "id": "42a189a9-0475-4277-aa35-5aabb5567042",
+              "name": "testName",
+              "value": "HbA1c",
+              "type": "string"
+            },
+            {
+              "id": "482dd4c2-dcf7-4451-86bd-654ddbaeba79",
+              "name": "resultValue",
+              "value": "9.1%",
+              "type": "string"
+            },
+            {
+              "id": "d4cdcac5-1d0a-4aeb-b968-c9f990c9f4d2",
+              "name": "resultFlag",
+              "value": "high",
+              "type": "string"
+            },
+            {
+              "id": "62cc3af9-0252-4bfd-9ac6-8c11da2a883a",
+              "name": "clinicianName",
+              "value": "Dr. Sarah Al-Rashid",
+              "type": "string"
+            },
+            {
+              "id": "b8bae6b4-935a-44c6-b7c5-7246a48c5749",
+              "name": "nextSteps",
+              "value": "Please book an appointment within 7 days.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -448,
+        -208
+      ],
+      "id": "0e1df21d-a98b-46df-a640-278824dd3ad5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "501cbf90-2ce5-4908-9249-b777b97ec7d7",
+              "leftValue": "={{ $json.resultFlag }}",
+              "rightValue": "high",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        -432,
+        64
+      ],
+      "id": "e63652e9-567d-4072-a04d-c48889b3eaff",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Write one calm, professional patient notification in English, under 160 characters total (including spaces).\n\nPatient: {{ $json.patientName }}\nTest: {{ $json.testName }}\nResult: {{ $json.resultValue }}\nNext steps: {{ $json.nextSteps }}\n\nExplain that the result is high and follow-up is needed. Do not diagnose or prescribe treatment. Do not claim it is not an emergency. Return only the notification text."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -256,
+        -128
+      ],
+      "id": "a9521b64-d131-4b2f-8bfb-921d70d91d84",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "V4gkm4YA8omjHrd9",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Lab Results Follow-Up Approval",
+        "formDescription": "Please review the AI-generated lab follow-up message and approve or reject it before sending it to the patient.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Decision",
+              "fieldType": "radio",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Approve"
+                  },
+                  {
+                    "option": "Reject"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        -112
+      ],
+      "id": "1fa69f85-e9d4-4ef0-a528-9b0100b7ae2a",
+      "name": "Wait",
+      "webhookId": "7e593655-3ca6-46dd-b325-fe03d8af9a66"
+    },
+    {
+      "parameters": {
+        "sendTo": "amhaggag1974@gmail.com",
+        "subject": "Lab Result – Physician Approval Required",
+        "emailType": "text",
+        "message": "=Please review this AI-generated patient message:  {{ $('Message a model').first().json.output[0].content[0].text }}  Approve or Reject using this link: {{ $execution.resumeFormUrl }}  This is a fictional training case. Do not send to a real patient.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -96,
+        80
+      ],
+      "id": "0b2dffa7-6b0a-4098-b838-4f1e48afc26d",
+      "name": "Send a message",
+      "webhookId": "53a5fe33-cff6-472d-b886-1cb862e04a1b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DvWRTZAHXsJcz1ue",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ String($json[\"Decision\"]).trim() }}",
+                    "rightValue": "Approve",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6784ebe7-b477-4b9e-9b4a-6a8f7488b091"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "6ad09c8c-4843-47d1-9989-77512bc74be4",
+                    "leftValue": "={{ String($json[\"Decision\"]).trim() }}",
+                    "rightValue": "Reject",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        160,
+        96
+      ],
+      "id": "c7168843-87a4-4611-ac49-b8be3f69de1d",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "amhaggag@hotmail.com",
+        "subject": "Lab Results – Follow-Up Notification",
+        "message": "={{ $('Message a model').first().json.output[0].content[0].text }}  --- This is a fictional training notification for the AI in Healthcare project.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        336,
+        -112
+      ],
+      "id": "a94553be-62db-42ed-8466-dce4c2f1b0a5",
+      "name": "Send a message1",
+      "webhookId": "94a045ac-be47-4610-94af-62a4518a530e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DvWRTZAHXsJcz1ue",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d235b13-395a-4249-815d-f7d1852fc0ec",
+              "name": "status",
+              "value": "Doctor rejected lab message",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        336,
+        112
+      ],
+      "id": "c3d29713-1f7a-4cc4-aafc-95fe67dca6c4",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "113JfRoxNzyusQjV8dvI9LaE78bpTgatXedPJ15taZTE",
+          "mode": "list",
+          "cachedResultName": "Project 2 – Lab Results Audit Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/113JfRoxNzyusQjV8dvI9LaE78bpTgatXedPJ15taZTE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/113JfRoxNzyusQjV8dvI9LaE78bpTgatXedPJ15taZTE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "patientId": "={{ $('Edit Fields').first().json.patientId }}",
+            "testName": "={{ $('Edit Fields').first().json.testName }}",
+            "resultValue": "={{ $('Edit Fields').first().json.resultValue }}",
+            "Decision": "={{ $json.Decision }}",
+            "status": "={{ $json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "patientId",
+              "displayName": "patientId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "testName",
+              "displayName": "testName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resultValue",
+              "displayName": "resultValue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Decision",
+              "displayName": "Decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        496,
+        96
+      ],
+      "id": "f1ce0889-2355-4515-8a3f-26f1f3ba0553",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "4zj6MmDJjhHikiPK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "113JfRoxNzyusQjV8dvI9LaE78bpTgatXedPJ15taZTE",
+          "mode": "list",
+          "cachedResultName": "Project 2 – Lab Results Audit Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/113JfRoxNzyusQjV8dvI9LaE78bpTgatXedPJ15taZTE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/113JfRoxNzyusQjV8dvI9LaE78bpTgatXedPJ15taZTE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "patientId": "={{ $('Edit Fields').first().json.patientId }}",
+            "testName": "={{ $('Edit Fields').first().json.testName }}",
+            "resultValue": "={{ $('Edit Fields').first().json.resultValue }}",
+            "Decision": "=\t{{ $('Wait').first().json.Decision }}",
+            "status": "=Patient notification sent"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "patientId",
+              "displayName": "patientId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "testName",
+              "displayName": "testName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resultValue",
+              "displayName": "resultValue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Decision",
+              "displayName": "Decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        560,
+        -112
+      ],
+      "id": "edd43d75-f076-4aee-9239-e8bcd7c62446",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "4zj6MmDJjhHikiPK",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a7007609-a434-4e9b-97d4-e3aa0a06e31b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a170ea6cf4811314947b55f3c25cf0bff03334543f96961246fee44cb97db5e4"
+  },
+  "nodeGroups": [],
+  "id": "7wjKh2csGR3NEPgv",
+  "tags": []
+}

@@ -1,0 +1,614 @@
+{
+  "name": "PATIENT APPOINTMENT REMINDER MESSAGE",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        -496
+      ],
+      "id": "849b7bbd-71d2-448c-a81b-bec4bd8adecd",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0fcd079c-4f1f-43d4-8187-6fec4f8584db",
+              "name": "patientId",
+              "value": "002",
+              "type": "string"
+            },
+            {
+              "id": "af8f4daf-169f-4049-809d-95c4a44f3d0f",
+              "name": "patientName",
+              "value": "mohamed ali",
+              "type": "string"
+            },
+            {
+              "id": "61854883-229d-46c0-851d-a3c647831f30",
+              "name": "appointmentType",
+              "value": "cardiology follow up",
+              "type": "string"
+            },
+            {
+              "id": "921f4cf3-efd6-4511-8aca-ac09b84cee33",
+              "name": "=appointmentDate",
+              "value": "={{ $today.plus({ days: 1 }).toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "0c04cd4f-0001-4155-883e-5b6c3cc34554",
+              "name": "=clinicianName",
+              "value": "Dr Hassan Majed",
+              "type": "string"
+            },
+            {
+              "id": "129bc765-ecde-4e38-9d87-55f012c16540",
+              "name": "patientChannel",
+              "value": "Email",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -512,
+        -496
+      ],
+      "id": "a60cd351-dec6-46b3-b167-65133a0a799f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Generate a short, polite and friendly appointment reminder in English, under 160 characters including spaces.\n\nPatient name: {{ $json.patientName }}\nAppointment type: {{ $json.appointmentType }}\nAppointment date: {{ $json.appointmentDate }}\nClinician name: {{ $json.clinicianName }}\n\nRequirements:\n- Include all four details accurately.\n- Do not invent an appointment time or location.\n- Do not include additional medical information.\n- Output only the final reminder message, without explanations, quotation marks, or headings."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -384,
+        -496
+      ],
+      "id": "0c870105-0f38-4518-98cd-74bdc145a4e0",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        -464
+      ],
+      "id": "634857f7-7e62-43f2-955e-fe420231b29a",
+      "name": "Wait",
+      "webhookId": "39bdfa8f-0414-4d5b-9b25-f69e088a9f5d"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2f0ab7fc-18c7-49fc-b82f-76ef1bd4a64e",
+              "name": "approvalUrl",
+              "value": "={{ $execution.resumeUrl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -128,
+        -496
+      ],
+      "id": "bbf15e9d-aafa-4f0d-bc15-0e8ceed37a6a",
+      "name": "prepare approval"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.query.decision }}",
+                    "rightValue": "approve",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "2ede2b73-5358-4d33-864e-3f732f7d72b6"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "b820cab8-ae0d-4a97-9184-0f65c13e5b68",
+                    "leftValue": "={{ $json.query.decision }}",
+                    "rightValue": "reject",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        304,
+        -464
+      ],
+      "id": "5b8e7e3c-c3d4-4916-b3c1-30fd2cb2d7b5",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "dremanabdelkarimrashad@gmail.com",
+        "subject": "Appointment Reminder – Test",
+        "emailType": "text",
+        "message": "={{ $('Message a model').first().json.output[0].content[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        -608
+      ],
+      "id": "b03a4e00-91e9-4985-a376-586e7fefb727",
+      "name": "Send a message",
+      "webhookId": "666805e9-38c7-48c2-a4fe-f4f5f1ab6181",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SVFKvFLxC54RUgMw",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "63389079-fd34-4434-8a08-1531b269a23b",
+              "name": "=timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "9d0e4767-779f-4533-a639-992ae01cecee",
+              "name": "=patientId",
+              "value": "={{ $('Edit Fields').first().json.patientId }}",
+              "type": "string"
+            },
+            {
+              "id": "69f2b13e-b84d-4f2d-8374-24ea2c3839a1",
+              "name": "decision",
+              "value": "approve",
+              "type": "string"
+            },
+            {
+              "id": "5403cb17-9b63-4ba5-9077-f4d27db8eaf8",
+              "name": "=finalMessage",
+              "value": "={{ $('Message a model').first().json.output[0].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        576,
+        -608
+      ],
+      "id": "a8a69fe9-e97f-4a5e-b8f7-c99b532d4c58",
+      "name": "Log Approved Reminder"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d024c4b0-8535-4727-a843-754cef783804",
+              "name": "=timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "193c4c9f-f43e-488c-ab59-2694132bb716",
+              "name": "patientId",
+              "value": "={{ $('Edit Fields').first().json.patientId }}",
+              "type": "string"
+            },
+            {
+              "id": "a4af0df8-bbd7-4ec3-b523-adb61d1ef81b",
+              "name": "decision",
+              "value": "reject",
+              "type": "string"
+            },
+            {
+              "id": "1ec6a1cc-a76a-4a16-9c34-e666165ca73f",
+              "name": "=finalMessage",
+              "value": "={{ $('Message a model').first().json.output[0].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        464,
+        -272
+      ],
+      "id": "3afadf30-e804-4094-b4b5-61cb2d724789",
+      "name": "Log Rejected Reminder"
+    },
+    {
+      "parameters": {
+        "sendTo": "dremanabdelkarimrashad@gmail.com",
+        "subject": "=Nurse Approval Required – Appointment Reminder",
+        "message": "={{ `<div style=\"font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px;color:#243746\"><h2>Nurse Approval Required</h2><p>Please review the AI-generated appointment reminder.</p><p><b>Patient:</b> ${$(\"Edit Fields\").first().json.patientName}</p><p><b>Appointment:</b> ${$(\"Edit Fields\").first().json.appointmentType}</p><p><b>Date:</b> ${$(\"Edit Fields\").first().json.appointmentDate}</p><p><b>Clinician:</b> ${$(\"Edit Fields\").first().json.clinicianName}</p><div style=\"background:#f3f6f6;padding:16px;border-radius:8px;margin:18px 0\"><b>AI-generated message</b><p>${$(\"Message a model\").first().json.output[0].content[0].text}</p></div><p><a href=\"${$json.approvalUrl}&decision=approve\" style=\"display:inline-block;background:#18794e;color:white;padding:12px 22px;border-radius:6px;text-decoration:none\">Approve</a> &nbsp; <a href=\"${$json.approvalUrl}&decision=reject\" style=\"display:inline-block;background:#b42318;color:white;padding:12px 22px;border-radius:6px;text-decoration:none\">Reject</a></p><p style=\"font-size:12px;color:#666\">Classroom demonstration using mock patient data.</p></div>` }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        16,
+        -480
+      ],
+      "id": "df5101e4-ae82-471d-b097-dfc4e171c14a",
+      "name": "Send Nurse Review",
+      "webhookId": "4ed59fb1-c596-4314-91b3-1446b18550a0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JPZUtIz4y3NG2ZIQ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qkeTjhWJ8Wu5EFy3Eql5qYDF0S-_WpsxkvRGECnzMM8",
+          "mode": "list",
+          "cachedResultName": "Patient Appointment Reminder Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qkeTjhWJ8Wu5EFy3Eql5qYDF0S-_WpsxkvRGECnzMM8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Approved",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qkeTjhWJ8Wu5EFy3Eql5qYDF0S-_WpsxkvRGECnzMM8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $json.timestamp }}",
+            "patientId": "={{ $json.patientId }}",
+            "finalMessage": "={{ $json.finalMessage }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "patientId",
+              "displayName": "patientId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "finalMessage",
+              "displayName": "finalMessage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        768,
+        -592
+      ],
+      "id": "4efd8892-cebf-41d6-a24c-90138d8a7bc1",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yCjvbpvH8ldKH29p",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qkeTjhWJ8Wu5EFy3Eql5qYDF0S-_WpsxkvRGECnzMM8",
+          "mode": "list",
+          "cachedResultName": "Patient Appointment Reminder Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qkeTjhWJ8Wu5EFy3Eql5qYDF0S-_WpsxkvRGECnzMM8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1101772486,
+          "mode": "list",
+          "cachedResultName": "Rejected",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qkeTjhWJ8Wu5EFy3Eql5qYDF0S-_WpsxkvRGECnzMM8/edit#gid=1101772486"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $json.timestamp }}",
+            "patientId": "={{ $json.patientId }}",
+            "finalMessage": "={{ $json.finalMessage }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "patientId",
+              "displayName": "patientId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "finalMessage",
+              "displayName": "finalMessage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        624,
+        -272
+      ],
+      "id": "742ad074-0fbd-4695-a9f0-3a56f141ab6d",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yCjvbpvH8ldKH29p",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "prepare approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepare approval": {
+      "main": [
+        [
+          {
+            "node": "Send Nurse Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Rejected Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Log Approved Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Nurse Review": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Rejected Reminder": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Approved Reminder": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3143a9e0-e6b9-4b34-8c51-cced12baaeba",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ea633a5820034663fa574b4f1cb47def97b9393c540efe652a87c55a218f0ec3"
+  },
+  "nodeGroups": [],
+  "id": "LJ2ObCA9K65Vfaxc",
+  "tags": []
+}
